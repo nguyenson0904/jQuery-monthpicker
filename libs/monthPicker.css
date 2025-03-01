@@ -1,0 +1,49 @@
+.monthpicker-dropdown {
+  display: none;
+  position: absolute;
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.monthpicker-year-nav {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.monthpicker-prev,
+.monthpicker-next {
+  cursor: pointer;
+  padding: 0 10px;
+  user-select: none;
+}
+
+.monthpicker-year-display {
+  font-weight: bold;
+}
+
+.monthpicker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.monthpicker-month {
+  padding: 5px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+.monthpicker-month.selected {
+  background: #007bff;
+  color: #fff;
+}
+
+.monthpicker-month.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

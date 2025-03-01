@@ -26,7 +26,8 @@
         border: 1px solid #ddd;
         border-radius: 3px;
       }
-    </style>
+      </style>
+      <link rel="stylesheet" href="libs/monthPicker.css">
   </head>
     <body>
       <div style="height:300px;overflow-y:scroll">
@@ -35,7 +36,7 @@
       type="text"
       id="myMonthPicker"
       placeholder="Select month(s)"
-      value="02"
+      value="03"
     />
         <div style="height:200px"></div>
       </div>
@@ -52,12 +53,16 @@
         style="background-color: #f00; width: 50px; height: 50px"
       ></div>
     </div>
-    <script src="libs/monthPicker.js"></script>
+    <script src="libs/monthPicker_v1.1.js"></script>
     <script>
       $(document).ready(function () {
         $("#myMonthPicker").monthpicker({
           multiSelect: true,
-          showYearNav: true,
+          showYearNav: false,
+            disabledRule: function (month, year) {
+      // Example: disable February and April in 2025 only.
+      return  [1, 3].includes(month);
+    },
           // displayFormat: "MM/YYYY",
           gridMonthFormat: "MM",
         });
