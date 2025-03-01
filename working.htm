@@ -35,6 +35,12 @@
       placeholder="Select month(s)"
       value="02"
     />
+  <body>
+    <input
+      type="text"
+      id="myMonthYearPicker"
+      placeholder="Select month(s)"
+    />
     <div>
       <div
         class="square"
@@ -45,9 +51,15 @@
     <script>
       $(document).ready(function () {
         $("#myMonthPicker").monthpicker({
-          multiSelect: true,
-          showYearNav: false,
+          multiSelect: false,
+          showYearNav: true,
           // displayFormat: "MM/YYYY",
+          gridMonthFormat: "MM",
+        });
+                $("#myMonthYearPicker").monthpicker({
+          multiSelect: true,
+          showYearNav: true,
+          displayFormat: "MM yyyy",
         });
 
         $(".square").monthpicker({
