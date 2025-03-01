@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Monthpicker Debug</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+      .monthpicker-dropdown {
+        display: none;
+        position: absolute;
+        border: 1px solid #ccc;
+        background: #fff;
+        padding: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        z-index: 9999;
+      }
+      .monthpicker-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+      }
+      .monthpicker-month {
+        padding: 5px;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="text" id="myMonthPicker" placeholder="Select month(s)" />
+    <script src="libs/monthPicker.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#myMonthPicker").monthpicker({
+          multiSelect: true,
+          showYearNav: true,
+        });
+      });
+    </script>
+  </body>
+</html>
