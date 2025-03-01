@@ -29,7 +29,12 @@
     </style>
   </head>
   <body>
-    <input type="text" id="myMonthPicker" placeholder="Select month(s)" />
+    <input
+      type="text"
+      id="myMonthPicker"
+      placeholder="Select month(s)"
+      value="02"
+    />
     <div>
       <div
         class="square"
@@ -41,7 +46,8 @@
       $(document).ready(function () {
         $("#myMonthPicker").monthpicker({
           multiSelect: true,
-          showYearNav: true,
+          showYearNav: false,
+          // displayFormat: "MM/YYYY",
         });
 
         $(".square").monthpicker({
