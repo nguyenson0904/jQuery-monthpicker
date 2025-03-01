@@ -1,19 +1,21 @@
 (function ($) {
   $.fn.monthpicker = function (options) {
-    // Merge default settings with options passed in
+    // Merge default settings with any options passed in.
+    // New option: monthBase, default is 1 (i.e. January = 1, February = 2, etc.)
     var settings = $.extend(
       {
-        multiSelect: false, // Allow multiple selections
-        showYearNav: true, // When false, year data is null (month-only mode)
-        year: new Date().getFullYear(), // Default current year (used if showYearNav is true)
-        displayFormat: "MM/YYYY", // Format for the element's value (supports tokens: YYYY, YY, MMMM, MMM, MM, M)
-        gridMonthFormat: "MMMM", // Format for month names in the dropdown grid (supports MMMM, MMM, MM, M)
-        value: null, // Optional initial value (has highest priority)
+        multiSelect: false, // Allow multiple selections.
+        showYearNav: true, // When false, year data is null (month-only mode).
+        year: new Date().getFullYear(), // Default current year (used if showYearNav is true).
+        displayFormat: "MM/YYYY", // Format for the element's value.
+        gridMonthFormat: "MMMM", // Format for month names in the dropdown grid.
+        value: null, // Optional initial value (highest priority).
+        monthBase: 1, // New: month numbering base; default 1 (i.e., January = 1).
       },
       options
     );
 
-    // Full month names array (used for formatting/parsing)
+    // Full month names array (used for formatting/parsing).
     var months = [
       "January",
       "February",
@@ -29,14 +31,15 @@
       "December",
     ];
 
-    // Process each element individually
+    // Process each element individually.
     return this.each(function () {
       var $elem = $(this);
       var currentYear = settings.year;
       // selections: each selection is an object { month: <number>, year: <number|null> }
+      // Internal representation for month is always 0-indexed.
       var selections = [];
 
-      // Create the picker container (each element gets its own picker)
+      // Create the picker container.
       var $picker = $('<div class="monthpicker-dropdown"></div>').css({
         display: "none",
         position: "absolute",
@@ -47,7 +50,7 @@
         zIndex: 9999,
       });
 
-      // If year navigation is enabled, add a header with prev/next buttons
+      // Add year navigation header if enabled.
       if (settings.showYearNav) {
         var $yearNav = $('<div class="monthpicker-year-nav"></div>').css({
           textAlign: "center",
@@ -77,16 +80,16 @@
         });
       }
 
-      // Create the grid container for month buttons
+      // Create the grid container for month buttons.
       var $grid = $('<div class="monthpicker-grid"></div>').css({
         display: "grid",
         gridTemplateColumns: "repeat(4, 1fr)",
         gap: "5px",
       });
 
-      // Helper: Format a month (0-indexed) for the grid using gridMonthFormat.
+      // Helper: Format a month (internal 0-index) for the grid using gridMonthFormat.
       function formatMonthForGrid(monthIndex) {
-        var monthNumber = monthIndex + 1;
+        var monthNumber = monthIndex + settings.monthBase;
         switch (settings.gridMonthFormat) {
           case "MMMM":
             return months[monthIndex];
@@ -101,7 +104,7 @@
         }
       }
 
-      // Generate month buttons for the grid
+      // Generate month buttons for the grid.
       for (var i = 0; i < 12; i++) {
         var $monthBtn = $(
           '<span class="monthpicker-month" data-month="' +
@@ -125,10 +128,10 @@
       // Formatting and Parsing Helpers
       // -------------------------------
 
-      // Extended formatSelection: supports tokens YYYY, YY, MMMM, MMM, MM, M.
+      // Format a selection object using settings.displayFormat.
+      // For tokens "MM" or "M", use monthBase (i.e., display month as (internal month + monthBase)).
       function formatSelection(sel) {
-        var month = sel.month + 1; // Convert 0-indexed to human-readable.
-        // If not using year, ignore year tokens.
+        var month = sel.month + settings.monthBase;
         if (!settings.showYearNav) {
           var fmt = settings.displayFormat.replace(/(YYYY|YY)/g, "");
           return fmt
@@ -170,16 +173,15 @@
         }
       }
 
-      // Extended parseSelection: if showYearNav is true, build a regex from displayFormat.
-      // Supports tokens: YYYY, yyyy, YY, MMMM, MMM, MM, M.
+      // Extended parseSelection: converts a string into a selection object.
+      // When tokens "MM" or "M" are encountered, subtract settings.monthBase.
       function parseSelection(str) {
         if (!settings.showYearNav) {
-          // Try to parse as number first.
           var m = parseInt(str, 10);
           if (!isNaN(m)) {
-            return { month: m - 1, year: null };
+            return { month: m - settings.monthBase, year: null };
           }
-          // If not numeric, try matching full month names or abbreviations.
+          // Also try matching full month names or abbreviations.
           var lowered = str.toLowerCase();
           for (var i = 0; i < months.length; i++) {
             if (
@@ -207,7 +209,6 @@
             MM: "(\\d{2})",
             M: "(\\d{1,2})",
           };
-          // Build regex using tokens in descending order of length.
           var tokenPattern = /(YYYY|yyyy|YY|MMMM|MMM|MM|M)/g;
           var tokens = [];
           var regexStr = settings.displayFormat.replace(
@@ -230,7 +231,6 @@
                 var yr = parseInt(value, 10);
                 result.year = yr < 50 ? 2000 + yr : 1900 + yr;
               } else if (token === "MMMM") {
-                // Find full month index (case-insensitive)
                 var idx = months.findIndex(function (m) {
                   return m.toLowerCase() === value.toLowerCase();
                 });
@@ -241,7 +241,7 @@
                 });
                 result.month = idxAbbr;
               } else if (token === "MM" || token === "M") {
-                result.month = parseInt(value, 10) - 1;
+                result.month = parseInt(value, 10) - settings.monthBase;
               }
             }
             if (
@@ -255,7 +255,7 @@
         }
       }
 
-      // Parse an initial value string (may have multiple selections separated by commas)
+      // Parse an initial value string that may contain multiple selections separated by commas.
       function parseInitialValue(valueStr) {
         var parts = valueStr.split(",");
         var sels = [];
@@ -300,7 +300,8 @@
         });
       }
 
-      // Update the element's display (using .val() or .text()) and store selections in data attribute.
+      // Update the element's display (using .val() or .text()) and store selections in the data attribute.
+      // When storing the selections, adjust the month number to be based on settings.monthBase.
       function updateElementData() {
         var display = selections
           .map(function (sel) {
@@ -312,13 +313,20 @@
         } else {
           $elem.text(display);
         }
-        $elem.data("monthpicker", selections.slice());
+        // Store a copy of selections with the month number adjusted (internal + monthBase).
+        var outputSelections = selections.map(function (sel) {
+          return {
+            month: sel.month + settings.monthBase,
+            year: sel.year,
+          };
+        });
+        $elem.data("monthpicker", outputSelections);
       }
 
       // -------------------------------
       // Initialization: Apply Existing Value
       // -------------------------------
-      // Priority: settings.value > element's value (or data-value attribute)
+      // Priority: settings.value (if provided) > element's value (or data-value attribute).
       if (settings.value) {
         if (typeof settings.value === "string") {
           selections = parseInitialValue(settings.value);
