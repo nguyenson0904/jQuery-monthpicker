@@ -1,21 +1,31 @@
+/**
+ * jQuery Month Picker
+ * Version: 1.0.0
+ * Latest Update: 2024-01-09
+ * Author: NguyenSon
+ *
+ * A flexible and customizable month picker jQuery plugin.
+ */
+
 (function ($) {
   $.fn.monthpicker = function (options) {
     // Merge default settings with any options passed in.
-    // New option: monthBase, default is 1 (i.e. January = 1, February = 2, etc.)
     var settings = $.extend(
       {
         multiSelect: false, // Allow multiple selections.
-        showYearNav: true, // When false, year data is null (month-only mode).
-        year: new Date().getFullYear(), // Default current year (used if showYearNav is true).
-        displayFormat: "MM/YYYY", // Format for the element's value.
-        gridMonthFormat: "MMMM", // Format for month names in the dropdown grid.
-        value: null, // Optional initial value (highest priority).
-        monthBase: 1, // New: month numbering base; default 1 (i.e., January = 1).
+        showYearNav: true, // Enable year navigation.
+        year: new Date().getFullYear(), // Default year.
+        displayFormat: "MM/YYYY", // Format for display.
+        gridMonthFormat: "MMMM", // Format for month names in grid.
+        value: null, // Optional initial value.
+        monthBase: 1, // Month numbering base (January = 1).
+        disabledRule: null, // Callback: (month, year) => boolean
+        onMonthSelect: null, // Callback function after selection.
       },
       options
     );
 
-    // Full month names array (used for formatting/parsing).
+    // Full month names array.
     var months = [
       "January",
       "February",
@@ -31,40 +41,23 @@
       "December",
     ];
 
-    // Process each element individually.
     return this.each(function () {
       var $elem = $(this);
       var currentYear = settings.year;
-      // selections: each selection is an object { month: <number>, year: <number|null> }
-      // Internal representation for month is always 0-indexed.
+      // Selections stored as objects: { month: <0-index>, year: <number|null> }
       var selections = [];
 
       // Create the picker container.
-      var $picker = $('<div class="monthpicker-dropdown"></div>').css({
-        display: "none",
-        position: "absolute",
-        border: "1px solid #ccc",
-        background: "#fff",
-        padding: "10px",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-        zIndex: 9999,
-      });
+      var $picker = $('<div class="monthpicker-dropdown"></div>');
 
       // Add year navigation header if enabled.
       if (settings.showYearNav) {
-        var $yearNav = $('<div class="monthpicker-year-nav"></div>').css({
-          textAlign: "center",
-          marginBottom: "10px",
-        });
-        var $prev = $(
-          '<span class="monthpicker-prev" style="cursor:pointer; margin-right:15px;">&lt;</span>'
-        );
+        var $yearNav = $('<div class="monthpicker-year-nav"></div>');
+        var $prev = $('<span class="monthpicker-prev">&lt;</span>');
         var $yearDisplay = $(
           '<span class="monthpicker-year-display">' + currentYear + "</span>"
         );
-        var $next = $(
-          '<span class="monthpicker-next" style="cursor:pointer; margin-left:15px;">&gt;</span>'
-        );
+        var $next = $('<span class="monthpicker-next">&gt;</span>');
         $yearNav.append($prev, $yearDisplay, $next);
         $picker.append($yearNav);
 
@@ -81,30 +74,26 @@
       }
 
       // Create the grid container for month buttons.
-      var $grid = $('<div class="monthpicker-grid"></div>').css({
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: "5px",
-      });
+      var $grid = $('<div class="monthpicker-grid"></div>');
 
-      // Helper: Format a month (internal 0-index) for the grid using gridMonthFormat.
-      function formatMonthForGrid(monthIndex) {
-        var monthNumber = monthIndex + settings.monthBase;
-        switch (settings.gridMonthFormat) {
-          case "MMMM":
-            return months[monthIndex];
-          case "MMM":
-            return months[monthIndex].substr(0, 3);
-          case "MM":
-            return (monthNumber < 10 ? "0" : "") + monthNumber;
-          case "M":
-            return monthNumber;
-          default:
-            return months[monthIndex];
-        }
+      // Helper: Returns formatted month name based on provided format.
+      function getMonthName(index, format) {
+        var monthNumber = index + settings.monthBase;
+        var formats = {
+          MMMM: months[index],
+          MMM: months[index].substr(0, 3),
+          MM: monthNumber < 10 ? "0" + monthNumber : "" + monthNumber,
+          M: monthNumber,
+        };
+        return formats[format] || months[index];
       }
 
-      // Generate month buttons for the grid.
+      // Format month for the grid.
+      function formatMonthForGrid(monthIndex) {
+        return getMonthName(monthIndex, settings.gridMonthFormat);
+      }
+
+      // Generate month buttons.
       for (var i = 0; i < 12; i++) {
         var $monthBtn = $(
           '<span class="monthpicker-month" data-month="' +
@@ -112,13 +101,7 @@
             '">' +
             formatMonthForGrid(i) +
             "</span>"
-        ).css({
-          padding: "5px",
-          textAlign: "center",
-          cursor: "pointer",
-          border: "1px solid #ddd",
-          borderRadius: "3px",
-        });
+        );
         $grid.append($monthBtn);
       }
       $picker.append($grid);
@@ -129,23 +112,23 @@
       // -------------------------------
 
       // Format a selection object using settings.displayFormat.
-      // For tokens "MM" or "M", use monthBase (i.e., display month as (internal month + monthBase)).
       function formatSelection(sel) {
         var month = sel.month + settings.monthBase;
         if (!settings.showYearNav) {
           var fmt = settings.displayFormat.replace(/(YYYY|YY)/g, "");
           return fmt
             .replace(/(MMMM|MMM|MM|M)/g, function (token) {
-              switch (token) {
-                case "MMMM":
-                  return months[sel.month];
-                case "MMM":
-                  return months[sel.month].substr(0, 3);
-                case "MM":
-                  return (month < 10 ? "0" : "") + month;
-                case "M":
-                  return month;
-              }
+              return token === "MMMM"
+                ? months[sel.month]
+                : token === "MMM"
+                ? months[sel.month].substr(0, 3)
+                : token === "MM"
+                ? month < 10
+                  ? "0" + month
+                  : month
+                : token === "M"
+                ? month
+                : "";
             })
             .trim()
             .replace(/^[\s\/]+|[\s\/]+$/g, "");
@@ -167,21 +150,21 @@
                   return (month < 10 ? "0" : "") + month;
                 case "M":
                   return month;
+                default:
+                  return "";
               }
             }
           );
         }
       }
 
-      // Extended parseSelection: converts a string into a selection object.
-      // When tokens "MM" or "M" are encountered, subtract settings.monthBase.
+      // Convert a string into a selection object.
       function parseSelection(str) {
         if (!settings.showYearNav) {
           var m = parseInt(str, 10);
           if (!isNaN(m)) {
             return { month: m - settings.monthBase, year: null };
           }
-          // Also try matching full month names or abbreviations.
           var lowered = str.toLowerCase();
           for (var i = 0; i < months.length; i++) {
             if (
@@ -231,15 +214,13 @@
                 var yr = parseInt(value, 10);
                 result.year = yr < 50 ? 2000 + yr : 1900 + yr;
               } else if (token === "MMMM") {
-                var idx = months.findIndex(function (m) {
+                result.month = months.findIndex(function (m) {
                   return m.toLowerCase() === value.toLowerCase();
                 });
-                result.month = idx;
               } else if (token === "MMM") {
-                var idxAbbr = months.findIndex(function (m) {
+                result.month = months.findIndex(function (m) {
                   return m.substr(0, 3).toLowerCase() === value.toLowerCase();
                 });
-                result.month = idxAbbr;
               } else if (token === "MM" || token === "M") {
                 result.month = parseInt(value, 10) - settings.monthBase;
               }
@@ -255,7 +236,7 @@
         }
       }
 
-      // Parse an initial value string that may contain multiple selections separated by commas.
+      // Parse an initial value string that may contain multiple selections.
       function parseInitialValue(valueStr) {
         var parts = valueStr.split(",");
         var sels = [];
@@ -272,36 +253,35 @@
       // UI Update Helpers
       // -------------------------------
 
-      // Update the visual state of month buttons based on current year (if used) and selections.
+      // Update visual state of month buttons.
       function updateGridSelections() {
         $grid.find(".monthpicker-month").each(function () {
           var monthIndex = $(this).data("month");
-          var isSelected;
-          if (settings.showYearNav) {
-            isSelected = selections.some(function (sel) {
-              return sel.month === monthIndex && sel.year === currentYear;
-            });
-          } else {
-            isSelected = selections.some(function (sel) {
-              return sel.month === monthIndex && sel.year === null;
-            });
-          }
+          var year = settings.showYearNav ? currentYear : null;
+          var isSelected = settings.showYearNav
+            ? selections.some(function (sel) {
+                return sel.month === monthIndex && sel.year === currentYear;
+              })
+            : selections.some(function (sel) {
+                return sel.month === monthIndex && sel.year === null;
+              });
           if (isSelected) {
-            $(this).addClass("selected").css({
-              background: "#007bff",
-              color: "#fff",
-            });
+            $(this).addClass("selected");
           } else {
-            $(this).removeClass("selected").css({
-              background: "",
-              color: "",
-            });
+            $(this).removeClass("selected");
+          }
+          // Update disabled state using disabledRule (if provided).
+          if (typeof settings.disabledRule === "function") {
+            if (settings.disabledRule(monthIndex, year)) {
+              $(this).addClass("disabled");
+            } else {
+              $(this).removeClass("disabled");
+            }
           }
         });
       }
 
-      // Update the element's display (using .val() or .text()) and store selections in the data attribute.
-      // When storing the selections, adjust the month number to be based on settings.monthBase.
+      // Update the element's display value and store the selections.
       function updateElementData() {
         var display = selections
           .map(function (sel) {
@@ -311,22 +291,52 @@
         if ($elem.is("input, textarea")) {
           $elem.val(display);
         } else {
-          $elem.text(display);
+          // $elem.text(display);
         }
-        // Store a copy of selections with the month number adjusted (internal + monthBase).
+        // Store a copy with the month number adjusted based on monthBase.
         var outputSelections = selections.map(function (sel) {
-          return {
-            month: sel.month + settings.monthBase,
-            year: sel.year,
-          };
+          return { month: sel.month + settings.monthBase, year: sel.year };
         });
         $elem.data("monthpicker", outputSelections);
+      }
+
+      // Combined update.
+      function applySelectionChanges() {
+        updateGridSelections();
+        updateElementData();
+      }
+
+      // -------------------------------
+      // Selection Helpers
+      // -------------------------------
+
+      function isMonthSelected(monthIndex, year) {
+        return selections.some(function (sel) {
+          return sel.month === monthIndex && sel.year === year;
+        });
+      }
+
+      function toggleSelection(monthIndex, year) {
+        if (settings.multiSelect) {
+          if (isMonthSelected(monthIndex, year)) {
+            selections = selections.filter(function (sel) {
+              return !(sel.month === monthIndex && sel.year === year);
+            });
+          } else {
+            selections.push({ month: monthIndex, year: year });
+          }
+        } else {
+          selections = [{ month: monthIndex, year: year }];
+        }
+        if (settings.onMonthSelect) {
+          settings.onMonthSelect(monthIndex + settings.monthBase, year);
+        }
+        applySelectionChanges();
       }
 
       // -------------------------------
       // Initialization: Apply Existing Value
       // -------------------------------
-      // Priority: settings.value (if provided) > element's value (or data-value attribute).
       if (settings.value) {
         if (typeof settings.value === "string") {
           selections = parseInitialValue(settings.value);
@@ -335,12 +345,9 @@
         }
         updateElementData();
       } else {
-        var initVal;
-        if ($elem.is("input, textarea")) {
-          initVal = $elem.val();
-        } else {
-          initVal = $elem.attr("data-value");
-        }
+        var initVal = $elem.is("input, textarea")
+          ? $elem.val()
+          : $elem.attr("data-value");
         if (initVal) {
           selections = parseInitialValue(initVal);
           updateElementData();
@@ -350,6 +357,7 @@
       // -------------------------------
       // Main Interaction Code
       // -------------------------------
+
       function positionPicker() {
         var offset = $elem.offset();
         $picker.css({
@@ -374,45 +382,10 @@
       });
 
       $grid.find(".monthpicker-month").on("click", function () {
+        if ($(this).hasClass("disabled")) return;
         var monthIndex = $(this).data("month");
-        var exists;
-        if (settings.showYearNav) {
-          exists = selections.some(function (sel) {
-            return sel.month === monthIndex && sel.year === currentYear;
-          });
-        } else {
-          exists = selections.some(function (sel) {
-            return sel.month === monthIndex && sel.year === null;
-          });
-        }
-
-        if (settings.multiSelect) {
-          if (exists) {
-            if (settings.showYearNav) {
-              selections = selections.filter(function (sel) {
-                return !(sel.month === monthIndex && sel.year === currentYear);
-              });
-            } else {
-              selections = selections.filter(function (sel) {
-                return !(sel.month === monthIndex && sel.year === null);
-              });
-            }
-          } else {
-            if (settings.showYearNav) {
-              selections.push({ month: monthIndex, year: currentYear });
-            } else {
-              selections.push({ month: monthIndex, year: null });
-            }
-          }
-        } else {
-          if (settings.showYearNav) {
-            selections = [{ month: monthIndex, year: currentYear }];
-          } else {
-            selections = [{ month: monthIndex, year: null }];
-          }
-        }
-        updateGridSelections();
-        updateElementData();
+        var year = settings.showYearNav ? currentYear : null;
+        toggleSelection(monthIndex, year);
         if (!settings.multiSelect) {
           $picker.hide();
         }
