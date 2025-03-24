@@ -403,30 +403,67 @@
         });
       }
 
-      $elem.on("click", function () {
-        $picker.show();
-        requestAnimationFrame(function() {
-          positionPicker();
-          if (settings.showYearNav) {
-            $picker.find(".monthpicker-year-display").text(currentYear);
+      // Add control object with dispose and toggle functions
+      var control = {
+        dispose: function() {
+          // Remove event listeners
+          $elem.off('click');
+          if ($elem.is('input, textarea')) {
+            $elem.off('change');
           }
-          updateGridSelections();
-        });
+          $prev && $prev.off('click');
+          $next && $next.off('click');
+          $grid.find('.monthpicker-month').off('click');
+          $(document).off('mousedown');
+
+          // Remove DOM elements
+          $picker.remove();
+
+          // Clear data
+          $elem.removeData('monthpicker');
+          $elem.removeData('monthPickerControl');
+        },
+        toggle: function(show) {
+          if (show === undefined) {
+            $picker.toggle();
+          } else if (show) {
+            $picker.show();
+            requestAnimationFrame(function() {
+              positionPicker();
+              if (settings.showYearNav) {
+                $picker.find(".monthpicker-year-display").text(currentYear);
+              }
+              updateGridSelections();
+            });
+          } else {
+            $picker.hide();
+          }
+        }
+      };
+
+      // Store control object in element's data
+      $elem.data('monthPickerControl', control);
+
+      // Modify click handler to use toggle
+      $elem.on("click", function () {
+        control.toggle(true);
       });
 
+      // Modify document click handler to use toggle
       $(document).on("mousedown", function (e) {
         if (!$(e.target).closest($picker).length && !$(e.target).is($elem)) {
-          $picker.hide();
+          control.toggle(false);
         }
       });
 
+      // Modify grid click handler to use toggle
       $grid.find(".monthpicker-month").on("click", function () {
         if ($(this).hasClass("disabled")) return;
         var monthIndex = $(this).data("month");
         var year = settings.showYearNav ? currentYear : null;
         toggleSelection(monthIndex, year);
         if (!settings.multiSelect) {
-          $picker.hide();
+          control.toggle(false);
         }
       });
 
