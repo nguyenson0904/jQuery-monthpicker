@@ -426,8 +426,10 @@
         toggle: function(show) {
           if (show === undefined) {
             $picker.toggle();
+            $elem.trigger($picker.is(':visible') ? 'showMonthPicker' : 'hideMonthPicker');
           } else if (show) {
             $picker.show();
+            $elem.trigger('showMonthPicker');
             requestAnimationFrame(function() {
               positionPicker();
               if (settings.showYearNav) {
@@ -437,6 +439,7 @@
             });
           } else {
             $picker.hide();
+            $elem.trigger('hideMonthPicker');
           }
         }
       };

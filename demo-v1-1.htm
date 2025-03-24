@@ -39,6 +39,8 @@
           // displayFormat: "MM/YYYY",
           // gridMonthFormat: "MM",
         });
+        $("#myMonthPicker").on('showMonthPicker', function() { console.log('show') });
+        $("#myMonthPicker").on('hideMonthPicker', function() {  console.log('hide') });
         // $("#myMonthYearPicker").monthpicker({
         //   multiSelect: true,
         //   showYearNav: true,
