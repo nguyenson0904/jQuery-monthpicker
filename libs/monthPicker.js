@@ -326,7 +326,11 @@
             selections.push({ month: monthIndex, year: year });
           }
         } else {
-          selections = [{ month: monthIndex, year: year }];
+          if (isMonthSelected(monthIndex, year)) {
+            selections = [];
+          } else {
+            selections = [{ month: monthIndex, year: year }];
+          }
         }
         if (settings.onMonthSelect) {
           settings.onMonthSelect(monthIndex + settings.monthBase, year);
@@ -360,19 +364,54 @@
 
       function positionPicker() {
         var offset = $elem.offset();
+        var elemHeight = $elem.outerHeight();
+        var pickerHeight = $picker.outerHeight();
+        var pickerWidth = $picker.outerWidth();
+        var windowHeight = $(window).height();
+        var windowWidth = $(window).width();
+        var scrollTop = $(window).scrollTop();
+        var scrollLeft = $(window).scrollLeft();
+
+        // Calculate available space in different directions
+        var spaceAbove = offset.top - scrollTop;
+        var spaceBelow = windowHeight - (offset.top - scrollTop + elemHeight);
+        var spaceRight = windowWidth - (offset.left - scrollLeft);
+
+        // Default position (below and aligned left)
+        var top = offset.top + elemHeight;
+        var left = offset.left;
+
+        // Check vertical position
+        if (spaceBelow < pickerHeight && spaceAbove > pickerHeight) {
+          // Position above if there's more space
+          top = offset.top - pickerHeight;
+        }
+
+        // Check horizontal position
+        if (spaceRight < pickerWidth) {
+          // Align right edge with input right edge
+          left = offset.left + $elem.outerWidth() - pickerWidth;
+        }
+
+        // Ensure the picker stays within viewport bounds
+        left = Math.max(scrollLeft, Math.min(left, windowWidth + scrollLeft - pickerWidth));
+        top = Math.max(scrollTop, Math.min(top, windowHeight + scrollTop - pickerHeight));
+
         $picker.css({
-          top: offset.top + $elem.outerHeight(),
-          left: offset.left,
+          top: top,
+          left: left
         });
       }
 
       $elem.on("click", function () {
-        positionPicker();
-        if (settings.showYearNav) {
-          $picker.find(".monthpicker-year-display").text(currentYear);
-        }
-        updateGridSelections();
         $picker.show();
+        requestAnimationFrame(function() {
+          positionPicker();
+          if (settings.showYearNav) {
+            $picker.find(".monthpicker-year-display").text(currentYear);
+          }
+          updateGridSelections();
+        });
       });
 
       $(document).on("mousedown", function (e) {
@@ -393,7 +432,17 @@
 
       if ($elem.is("input, textarea")) {
         $elem.on("change", function () {
-          updateElementData();
+          var value = $(this).val().trim();
+          if (!value) {
+            selections = [];
+            applySelectionChanges();
+          } else {
+            var parsed = parseInitialValue(value);
+            if (parsed.length > 0) {
+              selections = parsed;
+              applySelectionChanges();
+            }
+          }
         });
       }
     });

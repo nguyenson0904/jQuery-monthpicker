@@ -30,7 +30,7 @@
     <script>
       $(document).ready(function () {
         $("#myMonthPicker").monthpicker({
-          multiSelect: true,
+          multiSelect: false,
           showYearNav: true,
           disabledRule: function (month, year) {
             // Example: disable February and April in 2025 only.
@@ -39,17 +39,17 @@
           // displayFormat: "MM/YYYY",
           // gridMonthFormat: "MM",
         });
-        $("#myMonthYearPicker").monthpicker({
-          multiSelect: true,
-          showYearNav: true,
-          displayFormat: "MM yyyy",
-          value: "01 2025, 06 2025, 03 2025"
-        });
+        // $("#myMonthYearPicker").monthpicker({
+        //   multiSelect: true,
+        //   showYearNav: true,
+        //   displayFormat: "MM yyyy",
+        //   value: "01 2025, 06 2025, 03 2025"
+        // });
 
-        $(".square").monthpicker({
-          multiSelect: true,
-          showYearNav: true,
-        });
+        // $(".square").monthpicker({
+        //   multiSelect: true,
+        //   showYearNav: true,
+        // });
       });
     </script>
   </body>
