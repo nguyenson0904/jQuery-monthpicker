@@ -326,7 +326,11 @@
             selections.push({ month: monthIndex, year: year });
           }
         } else {
-          selections = [{ month: monthIndex, year: year }];
+          if (isMonthSelected(monthIndex, year)) {
+            selections = [];
+          } else {
+            selections = [{ month: monthIndex, year: year }];
+          }
         }
         if (settings.onMonthSelect) {
           settings.onMonthSelect(monthIndex + settings.monthBase, year);
@@ -360,40 +364,125 @@
 
       function positionPicker() {
         var offset = $elem.offset();
+        var elemHeight = $elem.outerHeight();
+        var pickerHeight = $picker.outerHeight();
+        var pickerWidth = $picker.outerWidth();
+        var windowHeight = $(window).height();
+        var windowWidth = $(window).width();
+        var scrollTop = $(window).scrollTop();
+        var scrollLeft = $(window).scrollLeft();
+
+        // Calculate available space in different directions
+        var spaceAbove = offset.top - scrollTop;
+        var spaceBelow = windowHeight - (offset.top - scrollTop + elemHeight);
+        var spaceRight = windowWidth - (offset.left - scrollLeft);
+
+        // Default position (below and aligned left)
+        var top = offset.top + elemHeight;
+        var left = offset.left;
+
+        // Check vertical position
+        if (spaceBelow < pickerHeight && spaceAbove > pickerHeight) {
+          // Position above if there's more space
+          top = offset.top - pickerHeight;
+        }
+
+        // Check horizontal position
+        if (spaceRight < pickerWidth) {
+          // Align right edge with input right edge
+          left = offset.left + $elem.outerWidth() - pickerWidth;
+        }
+
+        // Ensure the picker stays within viewport bounds
+        left = Math.max(scrollLeft, Math.min(left, windowWidth + scrollLeft - pickerWidth));
+        top = Math.max(scrollTop, Math.min(top, windowHeight + scrollTop - pickerHeight));
+
         $picker.css({
-          top: offset.top + $elem.outerHeight(),
-          left: offset.left,
+          top: top,
+          left: left
         });
       }
 
-      $elem.on("click", function () {
-        positionPicker();
-        if (settings.showYearNav) {
-          $picker.find(".monthpicker-year-display").text(currentYear);
+      // Add control object with dispose and toggle functions
+      var control = {
+        dispose: function() {
+          // Remove event listeners
+          $elem.off('click');
+          if ($elem.is('input, textarea')) {
+            $elem.off('change');
+          }
+          $prev && $prev.off('click');
+          $next && $next.off('click');
+          $grid.find('.monthpicker-month').off('click');
+          $(document).off('mousedown');
+
+          // Remove DOM elements
+          $picker.remove();
+
+          // Clear data
+          $elem.removeData('monthpicker');
+          $elem.removeData('monthPickerControl');
+        },
+        toggle: function(show) {
+          if (show === undefined) {
+            $picker.toggle();
+            $elem.trigger($picker.is(':visible') ? 'showMonthPicker' : 'hideMonthPicker');
+          } else if (show) {
+            $picker.show();
+            $elem.trigger('showMonthPicker');
+            requestAnimationFrame(function() {
+              positionPicker();
+              if (settings.showYearNav) {
+                $picker.find(".monthpicker-year-display").text(currentYear);
+              }
+              updateGridSelections();
+            });
+          } else {
+            $picker.hide();
+            $elem.trigger('hideMonthPicker');
+          }
         }
-        updateGridSelections();
-        $picker.show();
+      };
+
+      // Store control object in element's data
+      $elem.data('monthPickerControl', control);
+
+      // Modify click handler to use toggle
+      $elem.on("click", function () {
+        control.toggle(true);
       });
 
+      // Modify document click handler to use toggle
       $(document).on("mousedown", function (e) {
         if (!$(e.target).closest($picker).length && !$(e.target).is($elem)) {
-          $picker.hide();
+          control.toggle(false);
         }
       });
 
+      // Modify grid click handler to use toggle
       $grid.find(".monthpicker-month").on("click", function () {
         if ($(this).hasClass("disabled")) return;
         var monthIndex = $(this).data("month");
         var year = settings.showYearNav ? currentYear : null;
         toggleSelection(monthIndex, year);
         if (!settings.multiSelect) {
-          $picker.hide();
+          control.toggle(false);
         }
       });
 
       if ($elem.is("input, textarea")) {
         $elem.on("change", function () {
-          updateElementData();
+          var value = $(this).val().trim();
+          if (!value) {
+            selections = [];
+            applySelectionChanges();
+          } else {
+            var parsed = parseInitialValue(value);
+            if (parsed.length > 0) {
+              selections = parsed;
+              applySelectionChanges();
+            }
+          }
         });
       }
     });

@@ -11,14 +11,17 @@
   <link rel="stylesheet" href="libs/monthPicker.css">
 </head>
 
-<body>
-  <div style="height:300px;overflow-y:scroll">
-    <div style="height:200px"></div>
-    <input type="text" id="myMonthPicker" placeholder="Select month(s)" value="03" />
-    <div style="height:200px"></div>
-  </div>
+
 
   <body>
+<div class="container bg-primary">
+123
+</div>
+    <div style="height:300px;width: 290px;overflow-y:scroll;background: #f00;padding-left: 500px;">
+      <div style="height:200px;width: 10px;"></div>
+      <input type="text" id="myMonthPicker" placeholder="Select month(s)" value="03" />
+      <div style="height:200px;width: 10px;"></div>
+    </div>
     <input type="text" id="myMonthYearPicker" placeholder="Select month(s)" />
     <div>
       <div class="square" style="background-color: #f00; width: 50px; height: 50px"></div>
@@ -27,26 +30,28 @@
     <script>
       $(document).ready(function () {
         $("#myMonthPicker").monthpicker({
-          multiSelect: true,
+          multiSelect: false,
           showYearNav: true,
           disabledRule: function (month, year) {
             // Example: disable February and April in 2025 only.
             return [1, 3].includes(month) && year === 2025;
           },
           // displayFormat: "MM/YYYY",
-          gridMonthFormat: "MM",
+          // gridMonthFormat: "MM",
         });
-        $("#myMonthYearPicker").monthpicker({
-          multiSelect: true,
-          showYearNav: true,
-          displayFormat: "MM yyyy",
-          value: "01 2025, 06 2025, 03 2025"
-        });
+        $("#myMonthPicker").on('showMonthPicker', function() { console.log('show') });
+        $("#myMonthPicker").on('hideMonthPicker', function() {  console.log('hide') });
+        // $("#myMonthYearPicker").monthpicker({
+        //   multiSelect: true,
+        //   showYearNav: true,
+        //   displayFormat: "MM yyyy",
+        //   value: "01 2025, 06 2025, 03 2025"
+        // });
 
-        $(".square").monthpicker({
-          multiSelect: true,
-          showYearNav: true,
-        });
+        // $(".square").monthpicker({
+        //   multiSelect: true,
+        //   showYearNav: true,
+        // });
       });
     </script>
   </body>

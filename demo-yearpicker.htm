@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>YearPicker Demo</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="libs/monthPicker.css">
+  <style>
+    .demo-section {
+      margin: 20px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .demo-title {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    .demo-description {
+      margin-bottom: 15px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-section">
+    <div class="demo-title">Basic Year Picker</div>
+    <div class="demo-description">Simple year picker with default configuration</div>
+    <input type="text" id="basicYearPicker" placeholder="Select year" />
+  </div>
+
+  <div class="demo-section">
+    <div class="demo-title">Multiple Year Selection</div>
+    <div class="demo-description">Select multiple years with custom format</div>
+    <input type="text" id="multiYearPicker" placeholder="Select multiple years" />
+  </div>
+
+  <div class="demo-section">
+    <div class="demo-title">Disabled Years</div>
+    <div class="demo-description">Year picker with disabled years (2024-2026 disabled)</div>
+    <input type="text" id="disabledYearPicker" placeholder="Select year" />
+  </div>
+
+  <div class="demo-section">
+    <div class="demo-title">Event Handling</div>
+    <div class="demo-description">Year picker with event logging</div>
+    <input type="text" id="eventYearPicker" placeholder="Select year" />
+    <div id="eventLog" style="margin-top: 10px; color: #666;"></div>
+  </div>
+
+  <script src="libs/yearPicker.js"></script>
+  <script>
+    $(document).ready(function () {
+      // Basic year picker
+      $("#basicYearPicker").yearpicker();
+
+      // Multiple year selection
+      $("#multiYearPicker").yearpicker({
+        multiSelect: true,
+        value: "2023, 2025",
+        displayFormat: "yyyy"
+      });
+
+      // Disabled years
+      $("#disabledYearPicker").yearpicker({
+        disabledRule: function(year) {
+          return year >= 2024 && year <= 2026;
+        }
+      });
+
+      // Event handling
+      $("#eventYearPicker").yearpicker();
+      
+      $("#eventYearPicker").on('showYearPicker', function() {
+        $("#eventLog").append("<div>YearPicker opened</div>");
+      });
+
+      $("#eventYearPicker").on('hideYearPicker', function() {
+        $("#eventLog").append("<div>YearPicker closed</div>");
+      });
+
+      $("#eventYearPicker").on('yearSelected', function(e, year) {
+        $("#eventLog").append(`<div>Year ${year} selected</div>`);
+      });
+    });
+  </script>
+</body>
+</html>
