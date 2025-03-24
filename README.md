@@ -1,7 +1,7 @@
 # MonthPicker.js
 
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/nguyenson0904/monthpicker) [![Last Updated](https://img.shields.io/badge/updated-2024--03--25-green.svg)](https://github.com/nguyenson0904/monthpicker/releases) [![Author](https://img.shields.io/badge/author-NguyenSon-orange.svg)](https://github.com/nguyenson0904)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/nguyenson0904/monthpicker) [![Last Updated](https://img.shields.io/badge/updated-2024--03--25-green.svg)](https://github.com/nguyenson0904/monthpicker/releases) [![Author](https://img.shields.io/badge/author-NguyenSon-orange.svg)](https://github.com/nguyenson0904)
 
 
 A lightweight, customizable jQuery plugin for selecting single or multiple months with optional year navigation.
